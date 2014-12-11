@@ -9,7 +9,7 @@
 
     <groupId>ee.ut.algorithmics</groupId>
     <artifactId>legacy-of-clay</artifactId>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <name>Legacy of Clay</name>
     <version>0.1-SNAPSHOT</version>
 
@@ -37,12 +37,6 @@
         </pluginManagement>
     </build>
   
-    <modules>
-        <module>keyword-finder</module>
-        <module>image-finder</module>
-        <module>collage-maker</module>
-    </modules>
-
     <!-- informational elements -->
 
     <inceptionYear>2014</inceptionYear>
@@ -81,5 +75,13 @@
             <timezone>Europe/Tallinn</timezone>
         </developer>
     </developers>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.8.1</version>
+        </dependency>
+    </dependencies>
 
 </project>
