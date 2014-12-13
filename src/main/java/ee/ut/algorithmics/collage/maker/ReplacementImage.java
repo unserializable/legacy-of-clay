@@ -11,12 +11,12 @@ public class ReplacementImage extends Image{
 	private double rgbRedAVGValue;
 	private double rgbGreenAVGValue;
 
-	public ReplacementImage(File imageFile, ColorSpace cSpace, int originalImageWidth) throws IOException {
+	public ReplacementImage(File imageFile, ColorSpace cSpace, int largestClusterWidth) throws IOException {
 		super(imageFile, cSpace);
 		double originalWidth = getWidth();
 		double originalHeight = getHeight();
 		double aspectRatio = originalWidth/originalHeight;
-		int replacementImageWidth = originalImageWidth / 8;
+		int replacementImageWidth = largestClusterWidth;
 		if (getWidth()>replacementImageWidth){
 			resize(replacementImageWidth, (int) (replacementImageWidth/aspectRatio));
 		}
@@ -24,7 +24,7 @@ public class ReplacementImage extends Image{
 	}
 	
 	public BufferedImage getResizedCopy(int newW, int newH){
-		java.awt.Image tmp = getImage().getScaledInstance(newW, newH, java.awt.Image.SCALE_SMOOTH);
+		java.awt.Image tmp = getImage().getScaledInstance(newW, newH, java.awt.Image.SCALE_DEFAULT);
 	    BufferedImage dimg = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
 
 	    Graphics2D g2d = dimg.createGraphics();

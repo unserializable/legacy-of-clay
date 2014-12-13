@@ -39,7 +39,7 @@ class Image {
 
 	protected void resizeWithAspectRatio(int newWidth) {
 		double aspectRatio = getWidth() / ((double) getHeight());
-		int newHeight = (int) aspectRatio * newWidth;
+		int newHeight = (int) (newWidth/aspectRatio);
 		java.awt.Image tmp = getImage().getScaledInstance(newWidth, newHeight,
 				java.awt.Image.SCALE_SMOOTH);
 		BufferedImage dimg = new BufferedImage(newWidth, newHeight,

@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import ee.ut.algorithmics.collage.maker.exceptions.ClusteringNotRunException;
 import ee.ut.algorithmics.collage.maker.exceptions.NoImageCreatedException;
+
+
 
 
 public class Collager {
@@ -20,15 +23,20 @@ public class Collager {
 									) throws NoImageCreatedException{
 		
 		if (cSpace == null)	cSpace = ColorSpace.sRGB;
-		if (minPixelsInCluster <= 0) minPixelsInCluster = 16;
-		if (splitCoefficent <= 0) splitCoefficent = 4;
+		if (splitCoefficent <= 0) splitCoefficent = 5;
 		if (outputImageMaxWidth <= 0 ) outputImageMaxWidth = 1280;
 		try{
 			InputImage inputImage = new InputImage(inputImageFile, cSpace, outputImageMaxWidth);
+			if (minPixelsInCluster <= 0) minPixelsInCluster = inputImage.getWidth()/100* inputImage.getHeight()/100;
 			List<ReplacementImage> replacementImages = new ArrayList<ReplacementImage>();
-			
-			for (File replacementImageFile: replacementImageFiles){
-				replacementImages.add(new ReplacementImage(replacementImageFile, cSpace, inputImage.getWidth()));
+			try {
+				for (File replacementImageFile: replacementImageFiles){
+					replacementImages.add(new ReplacementImage(replacementImageFile, cSpace, inputImage.getLargestClusterWidth(splitCoefficent, minPixelsInCluster)));
+				}
+			}
+			catch (ClusteringNotRunException e) {
+				e.printStackTrace();
+				throw new NoImageCreatedException();
 			}
 			inputImage.createCollage(splitCoefficent, minPixelsInCluster, replacementImages);
 			inputImage.export(outputImage);	

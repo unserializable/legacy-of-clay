@@ -1,10 +1,13 @@
 package ee.ut.algorithmics.collage.maker;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Random;
+import java.util.Stack;
 
 import ee.ut.algorithmics.collage.maker.exceptions.NoReplacementImageFoundException;
 
@@ -33,6 +36,29 @@ class Cluster {
 		endY = parentImage.getHeight();
 	}
 	
+	protected int findLargestClusterWidth(){
+		int largestClusterWidth = 0;
+		Stack<Cluster> unVisitedClusters = new Stack<>();
+		unVisitedClusters.add(this);
+		while (!unVisitedClusters.isEmpty()){
+			Cluster currentCluster = unVisitedClusters.pop();
+			if (currentCluster.getWidth() <= largestClusterWidth){
+				continue;
+			}
+			if (currentCluster.subClusters == null){
+				if (largestClusterWidth < currentCluster.getWidth()){
+					largestClusterWidth = currentCluster.getWidth();
+				}
+			}
+			else if (currentCluster.getWidth() > largestClusterWidth){
+				for (Cluster cluster: currentCluster.subClusters){
+					unVisitedClusters.push(cluster);
+				}
+			}
+		}
+		return largestClusterWidth;
+	}
+	
 	private Cluster(Image parentImage, int startX, int endX, int startY, int endY) {
 		super();
 		this.parentImage = parentImage;
@@ -40,30 +66,63 @@ class Cluster {
 		this.endX = endX;
 		this.startY = startY;
 		this.endY = endY;
-		writeImageRGBValues();
 	}
 	
-	private boolean shouldSplit(double coefficent, Cluster[] clusters, final int MINIMAL_CLUSTER_SIZE){
-		if (getTotalPixels()<MINIMAL_CLUSTER_SIZE){
-			return false;
+	private void writeClustersRGBValues(){
+		if (subClusters == null){
+			writeRGBValues();
 		}
-		for (Cluster cluster: clusters){
-			if (this.distanceTo(cluster) > coefficent){
-				return true;
+		else{
+			for (Cluster cluster: subClusters){
+				cluster.writeClustersRGBValues();
+			}
+			for (Cluster cluster: subClusters){
+				rgbBlueAVGValue = rgbBlueAVGValue + cluster.getRgbBlueAVGValue();
+				rgbRedAVGValue = rgbRedAVGValue + cluster.getRgbRedAVGValue();
+				rgbGreenAVGValue = rgbGreenAVGValue + cluster.getRgbGreenAVGValue();
+			}
+			rgbBlueAVGValue = rgbBlueAVGValue/4;
+			rgbRedAVGValue = rgbRedAVGValue/4;
+			rgbGreenAVGValue = rgbGreenAVGValue/4;
+		}
+	}
+	
+	protected void removeSimilarClusters(double coefficent){
+		if (subClusters != null){
+			boolean shouldRemoveSubClusters = true;
+			for (Cluster cluster: subClusters){
+				if (this.distanceTo(cluster) > coefficent){
+					shouldRemoveSubClusters = false;
+					break;
+				}
+			}
+			if (shouldRemoveSubClusters){
+				subClusters = null;
+			}
+			else{
+				for (Cluster cluster: subClusters){
+					cluster.removeSimilarClusters(coefficent);
+				}
 			}
 		}
-		return false;
 	}
 	
-	protected void split(final double coefficent, final int minimalClusterSize){
-		subClusters = new Cluster[4];
-		subClusters[0] = new Cluster(parentImage, startX, startX + (endX - startX)/2, startY, startY + (endY-startY)/2);
-		subClusters[1] = new Cluster(parentImage, startX + (endX - startX)/2, endX, startY, startY + (endY-startY)/2);
-		subClusters[2] = new Cluster(parentImage, startX, startX + (endX - startX)/2, startY + (endY-startY)/2, endY);
-		subClusters[3] = new Cluster(parentImage, startX + (endX - startX)/2, endX, startY + (endY-startY)/2, endY);
-		if (shouldSplit(coefficent, subClusters, minimalClusterSize)){
+	protected void createClusters(final double coefficent, final int minimalClusterSize){
+		clusterize(minimalClusterSize);
+		writeClustersRGBValues();
+		removeSimilarClusters(coefficent);
+	}
+	
+	
+	private void clusterize(final int minimalClusterSize){
+		if (getTotalPixels() > minimalClusterSize){
+			subClusters = new Cluster[4];
+			subClusters[0] = new Cluster(parentImage, startX, startX + (endX - startX)/2, startY, startY + (endY-startY)/2);
+			subClusters[1] = new Cluster(parentImage, startX + (endX - startX)/2, endX, startY, startY + (endY-startY)/2);
+			subClusters[2] = new Cluster(parentImage, startX, startX + (endX - startX)/2, startY + (endY-startY)/2, endY);
+			subClusters[3] = new Cluster(parentImage, startX + (endX - startX)/2, endX, startY + (endY-startY)/2, endY);
 			for (Cluster cluster: subClusters){
-				cluster.split(coefficent, minimalClusterSize);
+				cluster.clusterize(minimalClusterSize);
 			}
 		}
 		else{
@@ -88,6 +147,7 @@ class Cluster {
 			}
 		}
 	}
+	
 	
 	private void replaceSectionWithImage(BufferedImage replacementImage){
 		BufferedImage image = parentImage.getImage(); 
@@ -169,7 +229,7 @@ class Cluster {
 		return chosen;
 	}
 	
-	private void writeImageRGBValues(){
+	private void writeRGBValues(){
 		double[] rgbValues = new double[3];
 		BufferedImage img = parentImage.getImage();
 		int counter = 0;
