@@ -136,6 +136,7 @@ class Cluster {
 				ReplacementImage closestImage = findReplacementImage(replacementImages);
 				BufferedImage resizedCopyOfReplacement = closestImage.getResizedCopy(getWidth(), getHeight());
 				replaceSectionWithImage(resizedCopyOfReplacement);
+				resizedCopyOfReplacement.flush();
 			}
 			catch (NoReplacementImageFoundException e){
 				e.printStackTrace();
