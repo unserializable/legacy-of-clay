@@ -1,5 +1,6 @@
 package ee.ut.algorithmics.image.finder;
 
+import javafx.util.Pair;
 import org.apache.commons.codec.binary.Base64;
 import org.core4j.Enumerable;
 import org.odata4j.consumer.ODataConsumer;
@@ -23,10 +24,10 @@ public class ImageFinder extends Thread {
     private static final String ACCOUNT_KEY = "UGLCr6t6LjbPnEo1S3OjyTBimaYFn/x+YHmeZnrhVgE";
 
     private final BlockingQueue<KeyPhrase> queueOfKeyPhrases;
-    private final BlockingQueue<String> listOfLinks;
+    private final BlockingQueue<Pair<String, String>> listOfLinks;
     private boolean keepGoing = true;
 
-    public ImageFinder(final BlockingQueue<KeyPhrase> queue, BlockingQueue<String> listOfLinks) {
+    public ImageFinder(final BlockingQueue<KeyPhrase> queue, BlockingQueue<Pair<String, String>> listOfLinks) {
         this.queueOfKeyPhrases = queue;
         this.listOfLinks = listOfLinks;
     }
@@ -56,9 +57,9 @@ public class ImageFinder extends Thread {
      * @param phrase Phrase to search for and it's weight.
      * @return List of link to relevant images.
      */
-    private List<String> findLinks(KeyPhrase phrase) {
+    private List<Pair<String, String>> findLinks(KeyPhrase phrase) {
 
-        List<String> listOfLinks = new ArrayList<String>();
+        List<Pair<String, String>> listOfLinks = new ArrayList<Pair<String, String>>();
 
         ODataConsumer c = ODataConsumers
                 .newBuilder("https://api.datamarket.azure.com/Data.ashx/Bing/Search/v1/")
@@ -66,18 +67,17 @@ public class ImageFinder extends Thread {
                 .build();
 
         OQueryRequest<OEntity> oRequest = c.getEntities("Image")
-                .custom("Query", "%27" + phrase.getPhrase() + "%27")
-                .custom("$top", String.valueOf(phrase.getWeight()));
-
+                .custom("Query", "%27" + phrase.getPhrase() + "%27");
         Enumerable<OEntity> entities = oRequest.execute();
 
         Enumerable<OEntity> entities1 = entities.take(phrase.getWeight());
 
         for (OEntity record : entities1) {
             List<OProperty> listOfPropertiesForThumbnail = (List<OProperty>) record.getProperty("Thumbnail").getValue();
-            listOfLinks.add((String) listOfPropertiesForThumbnail.get(0).getValue());
-        }
 
+            listOfLinks.add(new Pair((String) listOfPropertiesForThumbnail.get(0).getValue(),
+                    ((String) listOfPropertiesForThumbnail.get(1).getValue()).split("/")[1]));
+        }
         return listOfLinks;
 
     }

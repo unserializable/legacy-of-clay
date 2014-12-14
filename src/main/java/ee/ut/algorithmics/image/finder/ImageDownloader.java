@@ -1,5 +1,7 @@
 package ee.ut.algorithmics.image.finder;
 
+import javafx.util.Pair;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,11 +16,11 @@ import java.util.concurrent.BlockingQueue;
  */
 public class ImageDownloader extends Thread {
 
-    private final BlockingQueue<String> queueOfLinks;
+    private final BlockingQueue<Pair<String, String>> queueOfLinks;
     private String path;
     private boolean keepGoing = true;
 
-    public ImageDownloader(final BlockingQueue<String> queue, String path) {
+    public ImageDownloader(final BlockingQueue<Pair<String, String>> queue, String path) {
         this.queueOfLinks = queue;
         this.path = path;
     }
@@ -30,11 +32,11 @@ public class ImageDownloader extends Thread {
 
                 if (queueOfLinks.size() > 0) {
 
-                    String link = queueOfLinks.take();
+                    Pair<String, String> link = queueOfLinks.take();
 
-                    if (link.equals("full_stop")) {
+                    if (link.getKey().equals("full_stop")) {
                         keepGoing = false;
-                        queueOfLinks.add("full_stop");
+                        queueOfLinks.add(new Pair("full_stop", "stop"));
                     } else {
                         save(link, this.path);
                     }
@@ -47,17 +49,17 @@ public class ImageDownloader extends Thread {
         }
     }
 
-    private void save(String imageUrl, String fileDestination) {
+    private void save(Pair<String, String> imageUrl, String fileDestination) {
 
         try {
 
-            URL url = new URL(imageUrl);
+            URL url = new URL(imageUrl.getKey());
 
             HttpURLConnection con;
 
             con = (HttpURLConnection) url.openConnection();
 
-            String fileName = imageUrl.split("HN.")[1].split("&")[0] + ".png";
+            String fileName = imageUrl.getKey().split("HN.")[1].split("&")[0] + "." + imageUrl.getValue();
 
             InputStream is = con.getInputStream();
             OutputStream os = new FileOutputStream(fileDestination + fileName);
