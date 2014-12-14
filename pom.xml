@@ -87,6 +87,12 @@
             <groupId>org.odata4j</groupId>
             <artifactId>odata4j-dist</artifactId>
             <version>0.7.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.eclipse.persistence</groupId>
+                    <artifactId>eclipselink</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
