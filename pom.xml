@@ -28,8 +28,8 @@
 
                     <configuration>
                         <encoding>${project.build.sourceEncoding}</encoding>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                        <source>1.7</source>
+                        <target>1.7</target>
                     </configuration>
                 </plugin>
 
@@ -81,6 +81,12 @@
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.8.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.odata4j</groupId>
+            <artifactId>odata4j-dist</artifactId>
+            <version>0.7.0</version>
         </dependency>
     </dependencies>
 
