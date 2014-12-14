@@ -42,7 +42,7 @@ public class DelfiTopicPageCrawler {
 					findHeadLineLinks(doc, topicArticleUrls);
                 } while (hasNextTopicPage(ffetch.get()));
 			} catch (InterruptedException | ExecutionException e) {
-				// TODO:
+				throw new RuntimeException(e);
 			}
 
 			return topicArticleUrls;
