@@ -14,6 +14,22 @@ public class ImageSearchManager {
     private static final int NUMBER_OF_THREADS_FOR_SEARCH = 2;
     private static final int NUMBER_OF_THREADS_FOR_DOWNLOAD = 3;
 
+    public static void main(String[] args){
+
+        ImageSearchManager imageManager = new ImageSearchManager();
+
+        List<KeyPhrase> phrases = new ArrayList<KeyPhrase>();
+        KeyPhrase p1 = new KeyPhrase("tree", 25);
+        KeyPhrase p2 = new KeyPhrase("Edgar Savisaar", 15);
+        KeyPhrase p3 = new KeyPhrase("Microsoft", 17);
+
+        phrases.add(p1);
+        phrases.add(p2);
+        phrases.add(p3);
+
+        imageManager.start(phrases, args[0]);
+    }
+
     public static void start(List<KeyPhrase> listOfPhrases, String path){
 
         final BlockingQueue<KeyPhrase> queueOfKeyPhrases = new LinkedBlockingQueue<KeyPhrase>(MAX_CAPACITY);
