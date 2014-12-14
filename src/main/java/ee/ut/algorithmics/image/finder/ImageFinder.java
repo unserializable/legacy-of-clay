@@ -71,7 +71,7 @@ public class ImageFinder extends Thread {
 
         Enumerable<OEntity> entities = oRequest.execute();
 
-        Enumerable<OEntity> entities1 = entities.take(30);
+        Enumerable<OEntity> entities1 = entities.take(phrase.getWeight());
 
         for (OEntity record : entities1) {
             List<OProperty> listOfPropertiesForThumbnail = (List<OProperty>) record.getProperty("Thumbnail").getValue();
