@@ -1,17 +1,13 @@
 package ee.ut.algorithmics.collage.maker;
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.Random;
 import java.util.Stack;
 
 import ee.ut.algorithmics.collage.maker.exceptions.NoReplacementImageFoundException;
-
-
 
 class Cluster {
 
@@ -25,6 +21,8 @@ class Cluster {
 	private double rgbBlueAVGValue;
 	private double rgbRedAVGValue;
 	private double rgbGreenAVGValue;
+	
+	private static final int WHITE_RGB = Image.getIntFromRGB(255, 255, 255);
 	
 	private Cluster[] subClusters = null;
 	
@@ -107,22 +105,57 @@ class Cluster {
 		}
 	}
 	
-	protected void createClusters(final double coefficent, final int minimalClusterSize){
-		clusterize(minimalClusterSize);
+	protected void createClusters(final double coefficent, final int minimalClusterWidth){
+		clusterize(minimalClusterWidth);
 		writeClustersRGBValues();
 		removeSimilarClusters(coefficent);
 	}
 	
+	protected void createClusteringWithWhiteEdges(){
+		if (subClusters == null){
+			paintEdgesWhite();
+		}
+		else{
+			for (Cluster cluster: subClusters){
+				cluster.createClusteringWithWhiteEdges();
+			}
+		}
+	}
 	
-	private void clusterize(final int minimalClusterSize){
-		if (getTotalPixels() > minimalClusterSize){
+	private void paintEdgesWhite(){
+		BufferedImage img = parentImage.getImage();
+		int x = startX;
+		int y = startY;
+		try{
+			for (x = startX; x < endX; x++){
+				img.setRGB(x, startY, WHITE_RGB);
+				img.setRGB(x, endY-1, WHITE_RGB);
+			}
+			for (y = startY; y < endY; y++){
+				img.setRGB(startX, y, WHITE_RGB);
+				img.setRGB(endX-1, y, WHITE_RGB);
+			}
+		}
+		catch(ArrayIndexOutOfBoundsException e){
+			System.out.println(x);
+			System.out.println(img.getWidth());
+			System.out.println(y);
+			System.out.println(img.getHeight());
+			System.out.println(startX + ", " + endX + ", " + startY + ", " + endY);
+			
+		}
+	}
+	
+	
+	private void clusterize(final int minimalClusterWidth){
+		if (getWidth() > minimalClusterWidth){
 			subClusters = new Cluster[4];
 			subClusters[0] = new Cluster(parentImage, startX, startX + (endX - startX)/2, startY, startY + (endY-startY)/2);
 			subClusters[1] = new Cluster(parentImage, startX + (endX - startX)/2, endX, startY, startY + (endY-startY)/2);
 			subClusters[2] = new Cluster(parentImage, startX, startX + (endX - startX)/2, startY + (endY-startY)/2, endY);
 			subClusters[3] = new Cluster(parentImage, startX + (endX - startX)/2, endX, startY + (endY-startY)/2, endY);
 			for (Cluster cluster: subClusters){
-				cluster.clusterize(minimalClusterSize);
+				cluster.clusterize(minimalClusterWidth);
 			}
 		}
 		else{
@@ -130,13 +163,18 @@ class Cluster {
 		}
 	}
 	
-	protected void replaceClustersWithImages(List<ReplacementImage> replacementImages) {
+	protected void replaceClustersWithImages(List<ReplacementImage> replacementImages, boolean fastFlag) {
 		if (subClusters == null){
 			try{
 				ReplacementImage closestImage = findReplacementImage(replacementImages);
-				BufferedImage resizedCopyOfReplacement = closestImage.getResizedCopy(getWidth(), getHeight());
-				replaceSectionWithImage(resizedCopyOfReplacement);
-				resizedCopyOfReplacement.flush();
+				if (fastFlag){
+					replaceSectionWithImage2(closestImage.getImage());
+				}
+				else{
+					BufferedImage resizedCopyOfReplacement = closestImage.getResizedCopy(getWidth(), getHeight());
+					replaceSectionWithImage(resizedCopyOfReplacement);
+					resizedCopyOfReplacement.flush();
+				}
 			}
 			catch (NoReplacementImageFoundException e){
 				e.printStackTrace();
@@ -144,9 +182,28 @@ class Cluster {
 		}
 		else{
 			for (Cluster cluster: subClusters){
-				cluster.replaceClustersWithImages(replacementImages);
+				cluster.replaceClustersWithImages(replacementImages, fastFlag);
 			}
 		}
+	}
+	
+	private void replaceSectionWithImage2(BufferedImage replacementImage){
+		BufferedImage image = parentImage.getImage(); 
+		double widthMult = (double)replacementImage.getWidth()/(double)getWidth();
+		double heightMult = (double)replacementImage.getHeight()/(double)getHeight();
+		for (int i = 0; i < getHeight(); i++){
+			int y = i + startY;
+			for (int j = 0; j < getWidth(); j++){
+				int x = j + startX;
+				try{
+					image.setRGB(x, y, replacementImage.getRGB((int) (j*widthMult),(int) (i*heightMult)));
+				}
+				catch(ArrayIndexOutOfBoundsException e){
+					System.out.println("ERROR");
+				}
+			}
+		}
+		
 	}
 	
 	

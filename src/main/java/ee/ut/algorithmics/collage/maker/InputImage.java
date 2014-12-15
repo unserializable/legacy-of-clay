@@ -13,28 +13,36 @@ class InputImage extends Image {
 
 	protected InputImage(File inputImage, ColorSpace cSpace, int maxImageWidth) throws IOException {
 		super(inputImage, cSpace);
-		if (getWidth() > maxImageWidth){
+		if (maxImageWidth <= 0){
+			//Leave original
+		}
+		else if (getWidth() > maxImageWidth){
 			resizeWithAspectRatio(maxImageWidth);
 		}
+		
 	}
 	
-	private void clusterize(double splitCoefficent, int minimalClusterSize){
+	private void clasterize(double splitCoefficent, int minimalClusterWidth){
 		System.out.println("Beginning clusterizing");
 		long a = System.currentTimeMillis();
 		mainCluster = new Cluster(this);
-		mainCluster.createClusters(splitCoefficent, minimalClusterSize)
-		;
+		mainCluster.createClusters(splitCoefficent, minimalClusterWidth);
 		long b = System.currentTimeMillis();
 		System.out.println("clusterizing ended in: " + ((double) (b-a))/1000.0);
 	}
 	
-	protected void createCollage(double splitCoefficent, int minimalClusterSize, List<ReplacementImage> replacementImages){
+	protected void createClasteringWithWhiteEdges(double splitCoefficent, int minimalClusterSize){
+		clasterize(splitCoefficent, minimalClusterSize);
+		mainCluster.createClusteringWithWhiteEdges();
+	}
+	
+	protected void createCollage(double splitCoefficent, int minimalClusterSize, List<ReplacementImage> replacementImages, boolean fastFlag){
 		if (mainCluster == null){
-			clusterize(splitCoefficent, minimalClusterSize);
+			clasterize(splitCoefficent, minimalClusterSize);
 		}
 		System.out.println("Beginning image replacement");
 		long a = System.currentTimeMillis();
-		mainCluster.replaceClustersWithImages(replacementImages);
+		mainCluster.replaceClustersWithImages(replacementImages, fastFlag);
 		long b = System.currentTimeMillis();
 		System.out.println("image replacement ended in: " + ((double) (b-a))/1000.0);
 		
@@ -42,7 +50,7 @@ class InputImage extends Image {
 		
 	protected int getLargestClusterWidth(double splitCoefficent, int minimalClusterSize) throws ClusteringNotRunException{
 		if (mainCluster == null){
-			clusterize(splitCoefficent, minimalClusterSize);
+			clasterize(splitCoefficent, minimalClusterSize);
 		}
 		if (maximumClusterWidth <= 0){
 			maximumClusterWidth = mainCluster.findLargestClusterWidth();

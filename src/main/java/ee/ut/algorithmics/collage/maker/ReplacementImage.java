@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.plaf.metal.MetalBorders.Flush3DBorder;
-
 public class ReplacementImage extends Image{
 	
 	private double rgbBlueAVGValue;
@@ -25,7 +23,7 @@ public class ReplacementImage extends Image{
 		double aspectRatio = originalWidth/originalHeight;
 		int replacementImageWidth = largestClusterWidth;
 		if (getWidth()>replacementImageWidth){
-			resize(replacementImageWidth, (int) (replacementImageWidth/aspectRatio));
+//			resize(replacementImageWidth, (int) (replacementImageWidth/aspectRatio));
 		}
 		writeImageRGBValues();
 	}
