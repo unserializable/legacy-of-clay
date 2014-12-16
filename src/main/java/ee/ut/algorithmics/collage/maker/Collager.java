@@ -24,7 +24,7 @@ public class Collager {
 		
 		if (cSpace == null)	cSpace = ColorSpace.sRGB;
 		if (splitCoefficent <= 0) splitCoefficent = 5;
-		if (outputImageMaxWidth <= 0 ) outputImageMaxWidth = 1280;
+		if (outputImageMaxWidth <= 0 ) outputImageMaxWidth = 3104;
 		try{
 			InputImage inputImage = new InputImage(inputImageFile, cSpace, outputImageMaxWidth);
 			if (minPixelsInCluster <= 0) minPixelsInCluster = inputImage.getWidth()/100* inputImage.getHeight()/100;
