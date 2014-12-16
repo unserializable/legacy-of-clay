@@ -52,7 +52,7 @@ public class DelfiArticleMinimizer {
 
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.err.println("Usage: DelfiArticleIndexer articleInputFolder articleOutputFolder");
+            System.err.println("Usage: DelfiArticleMinimizer articleInputFolder articleOutputFolder");
             System.exit(1);
         }
 
@@ -129,21 +129,5 @@ public class DelfiArticleMinimizer {
             d.select(ignore).remove();
         }
         return d;
-    }
-
-    public static Set<String> loadStopWords() {
-        Path path = null;
-        List<String> lines = null;
-        try {
-            path = Paths.get(DelfiArticleMinimizer.class.getResource("/stopwords_et.txt").toURI());
-            lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-        } catch (IOException | URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-
-        if (lines.isEmpty())
-            return Collections.emptySet();
-
-        return new LinkedHashSet<>(lines);
     }
 }
