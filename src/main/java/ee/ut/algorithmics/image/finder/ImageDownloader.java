@@ -64,7 +64,7 @@ public class ImageDownloader extends Thread {
             String fileName = imageUrl.getKey().split("HN.")[1].split("&")[0] + "." + imageUrl.getValue();
 
             InputStream is = con.getInputStream();
-            OutputStream os = new FileOutputStream(fileDestination + fileName);
+            OutputStream os = new FileOutputStream(fileDestination + "/" + fileName);
 
             byte[] b = new byte[2048];
             int length;
