@@ -41,7 +41,7 @@ public class ImageSearchManager {
         phrases.add(p6);
         phrases.add(p7);
 
-        imageManager.start(imageManager.limitNumberOfImages(imageManager.calculateRealWeight(phrases), 200), args[0]);
+        imageManager.startDownload(imageManager.limitNumberOfImages(imageManager.calculateRealWeight(phrases), 200), args[0]);
 
     }
 
@@ -52,10 +52,9 @@ public class ImageSearchManager {
     }
 
     public void downloadPictures(String targetFolder) {
-        ImageSearchManager imageManager = new ImageSearchManager();
         File dir = new File(targetFolder);
         dir.mkdir();
-        start(limitNumberOfImages(calculateRealWeight(this.keyphrases), 200), dir.getAbsolutePath());
+        startDownload(limitNumberOfImages(calculateRealWeight(this.keyphrases), 200), dir.getAbsolutePath());
     }
 
     private List<WordIncidence> calculateRealWeight(List<WordIncidence> keyPhrases){
@@ -99,8 +98,7 @@ public class ImageSearchManager {
         return results;
     }
 
-    public static void start(List<WordIncidence> listOfPhrases, String path){
-
+    public static void startDownload(List<WordIncidence> listOfPhrases, String path){
         final BlockingQueue<WordIncidence> queueOfKeyPhrases = new LinkedBlockingQueue<WordIncidence>(MAX_CAPACITY);
 
         final BlockingQueue<Pair<String, String>> queueOfLinks =
@@ -109,28 +107,25 @@ public class ImageSearchManager {
 
         queueOfKeyPhrases.addAll(listOfPhrases);
 
-        final List<ImageFinder> consumers = new ArrayList<ImageFinder>();
+        final List<ImageFinder> imageFinders = new ArrayList<ImageFinder>();
         for (int i = 0; i < NUMBER_OF_THREADS_FOR_SEARCH; i++) {
             final ImageFinder consThread = new ImageFinder(queueOfKeyPhrases, queueOfLinks);
             consThread.start();
-            consumers.add(consThread);
+            imageFinders.add(consThread);
         }
 
 
-        final List<ImageDownloader> consumers1 = new ArrayList<ImageDownloader>();
+        final List<ImageDownloader> imageDownloaders = new ArrayList<ImageDownloader>();
         for (int i = 0; i < NUMBER_OF_THREADS_FOR_DOWNLOAD + 2; i++) {
             final ImageDownloader consThread = new ImageDownloader(queueOfLinks, path);
             consThread.start();
-            consumers1.add(consThread);
+            imageDownloaders.add(consThread);
         }
 
-
         // Wait while all threads to finish the job
-        for (ImageFinder threat : consumers){
-
+        for (ImageFinder ifThread : imageFinders) {
             try {
-                threat.join();
-
+                ifThread.join();
             }catch (InterruptedException iex){
                 throw new RuntimeException(iex);
             }
@@ -141,19 +136,14 @@ public class ImageSearchManager {
         System.out.println("Search finished");
 
         // Wait while all threads to finish the job
-        for (ImageDownloader threat : consumers1){
-
+        for (ImageDownloader dwnThread : imageDownloaders){
             try {
-                threat.join();
-
+                dwnThread.join();
             }catch (InterruptedException iex){
                 throw new RuntimeException(iex);
             }
         }
 
         System.out.println("Download finished");
-
     }
-
-
 }

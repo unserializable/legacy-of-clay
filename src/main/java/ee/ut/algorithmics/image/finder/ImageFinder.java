@@ -2,18 +2,14 @@ package ee.ut.algorithmics.image.finder;
 
 import ee.ut.algorithmics.keyword.finder.WordIncidence;
 import javafx.util.Pair;
-import org.apache.commons.codec.binary.Base64;
 import org.core4j.Enumerable;
 import org.odata4j.consumer.ODataConsumer;
 import org.odata4j.consumer.ODataConsumers;
 import org.odata4j.consumer.behaviors.OClientBehaviors;
 import org.odata4j.core.OEntity;
-import org.odata4j.core.OLink;
 import org.odata4j.core.OProperty;
 import org.odata4j.core.OQueryRequest;
-import org.odata4j.edm.EdmEntitySet;
 
-import javax.xml.bind.DatatypeConverter;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 

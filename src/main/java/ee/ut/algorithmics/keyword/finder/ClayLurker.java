@@ -1,5 +1,6 @@
 package ee.ut.algorithmics.keyword.finder;
 
+import ee.ut.algorithmics.image.finder.ImageSearchManager;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -24,6 +25,10 @@ public class ClayLurker {
 
         String articleInputFolder = "/home/taimo/Downloads/savi-articles/0" ; //args[0];
 
+        processForImages(articleInputFolder, "/home/taimo/dev/temp-4-all");
+    }
+
+    private static void processForImages(String articleInputFolder, String imageSaveFolder) {
         File articleFolder = new File(articleInputFolder);
         int i = 0;
 
@@ -32,9 +37,6 @@ public class ClayLurker {
         List<Set<String>> articleWordList = new ArrayList<>();
 
         for (File articleFile: articleFolder.listFiles()) {
-            if (i > 100) {
-                break;
-            }
             i++;
             System.err.println("processing file #" + i);
             Document parsed = null;
@@ -66,6 +68,9 @@ public class ClayLurker {
 
                 articleSplit[j] = trimmed;
 
+                if (articleSplit[j].endsWith("nud") || articleSplit[j].endsWith("tud"))
+                    continue;
+
                 if (Character.isUpperCase(articleSplit[j].charAt(0)) && (j == 0 || (!articleSplit[j-1].isEmpty() && !Character.isUpperCase(articleSplit[j-1].charAt(0))))) {
                     StringBuilder phraseBuild = new StringBuilder(articleSplit[j]);
                     for (int k = j+1; k < articleSplit.length; k++) {
@@ -93,7 +98,7 @@ public class ClayLurker {
             articleWordList.add(articleWords);
         }
 
-        Set<String> allWords = new LinkedHashSet<>();
+        Set<String> allWords = new LinkedHashSet<>(i*4);
         for (Set<String> articlewords: articleWordList) {
             allWords.addAll(articlewords);
         }
@@ -106,7 +111,10 @@ public class ClayLurker {
 
         incidences.sort(Collections.reverseOrder(WordIncidenceComparator.INSTANCE));
 
-        System.out.println(keyPhrases("savisaar", incidences));
+        List<WordIncidence> phrases = keyPhrases("edgar savisaar", incidences);
+        System.out.println(phrases);
+
+        new ImageSearchManager(phrases).downloadPictures(imageSaveFolder);
     }
 
 
@@ -128,10 +136,19 @@ public class ClayLurker {
         System.out.println("total=" + totalIncidences + " avg=" + avgIncidence + " stddev=" + stddev);
 
         for (WordIncidence incidence: incidences) {
-            if (!incidence.getWord().contains(searchPhrase)) {
-                if ((incidence.getIncidence() > (avgIncidence + 3*stddev)) ||
-                    ((incidence.getWord().split(" ").length > 1) && (incidence.getIncidence() > avgIncidence + 1.5 *stddev)))
-                result.add(incidence);
+            boolean contains = false;
+            String[] sphSplit = searchPhrase.split(" ");
+            for (String ps: sphSplit) {
+                contains = contains || incidence.getWord().toLowerCase().contains(ps);
+            }
+
+            if (!contains) {
+                if (incidence.getIncidence() > (avgIncidence + 19*stddev)) {
+                    result.add(incidence);
+                } else if (incidence.getWord().split(" ").length > 1) {
+                    if (incidence.getIncidence() > (avgIncidence + stddev))
+                        result.add(incidence);
+                }
             }
         }
 
