@@ -3,6 +3,7 @@ package ee.ut.algorithmics.image.finder;
 import ee.ut.algorithmics.keyword.finder.WordIncidence;
 import javafx.util.Pair;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,15 +14,14 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Created by Iurii on 12/13/2014.
  */
 public class ImageSearchManager {
-
     private static final int MAX_CAPACITY = 250;
     private static final int NUMBER_OF_THREADS_FOR_SEARCH = 2;
     private static final int NUMBER_OF_THREADS_FOR_DOWNLOAD = 3;
 
+    private List<WordIncidence> keyphrases;
+
     public static void main(String[] args){
-
         ImageSearchManager imageManager = new ImageSearchManager();
-
         List<WordIncidence> phrases = new ArrayList<>();
         WordIncidence p1 = new WordIncidence("edgar", 97);
         WordIncidence p2 = new WordIncidence("eesti", 57);
@@ -45,6 +45,18 @@ public class ImageSearchManager {
 
     }
 
+    public ImageSearchManager() {}
+
+    public ImageSearchManager(List<WordIncidence> keyphrases) {
+        this.keyphrases = keyphrases;
+    }
+
+    public void downloadPictures(String targetFolder) {
+        ImageSearchManager imageManager = new ImageSearchManager();
+        File dir = new File(targetFolder);
+        dir.mkdir();
+        start(limitNumberOfImages(calculateRealWeight(this.keyphrases), 200), dir.getAbsolutePath());
+    }
 
     private List<WordIncidence> calculateRealWeight(List<WordIncidence> keyPhrases){
 
