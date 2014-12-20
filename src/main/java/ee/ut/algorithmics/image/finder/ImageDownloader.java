@@ -26,6 +26,7 @@ public class ImageDownloader extends Thread {
     }
 
     public void run() {
+        System.out.println("Image Downloader " + Thread.currentThread().getName() + " running.");
 
         while (keepGoing) {
             try {
@@ -50,6 +51,7 @@ public class ImageDownloader extends Thread {
     }
 
     private void save(Pair<String, String> imageUrl, String fileDestination) {
+        System.out.println("saving to " + fileDestination + " (" + imageUrl + " )");
 
         try {
 
@@ -62,7 +64,7 @@ public class ImageDownloader extends Thread {
             String fileName = imageUrl.getKey().split("HN.")[1].split("&")[0] + "." + imageUrl.getValue();
 
             InputStream is = con.getInputStream();
-            OutputStream os = new FileOutputStream(fileDestination + fileName);
+            OutputStream os = new FileOutputStream(fileDestination + "/" + fileName);
 
             byte[] b = new byte[2048];
             int length;

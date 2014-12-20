@@ -32,6 +32,7 @@ public class Collager {
 		if (splitCoefficent <= 0) splitCoefficent = DEFAULT_SPLIT_COEFFICENT;
 		if (outputImageMaxWidth <= 0 ) outputImageMaxWidth = DEFAULT_OUTPUT_IMAGE_MAX_WIDTH;
 		if (minClusterWidth <= 0) minClusterWidth = DEFAULT_MINIMAL_CLUSTER_WIDTH;
+
 		try{
 			InputImage inputImage = new InputImage(inputImageFile, cSpace, outputImageMaxWidth);
 			List<ReplacementImage> replacementImages = new ArrayList<ReplacementImage>();

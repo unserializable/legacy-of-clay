@@ -1,7 +1,9 @@
 package ee.ut.algorithmics.image.finder;
 
+import ee.ut.algorithmics.keyword.finder.WordIncidence;
 import javafx.util.Pair;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,28 +14,24 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Created by Iurii on 12/13/2014.
  */
 public class ImageSearchManager {
-
     private static final int MAX_CAPACITY = 250;
     private static final int NUMBER_OF_THREADS_FOR_SEARCH = 2;
     private static final int NUMBER_OF_THREADS_FOR_DOWNLOAD = 3;
 
+    private List<WordIncidence> keyphrases;
+
     public static void main(String[] args){
-
         ImageSearchManager imageManager = new ImageSearchManager();
+        List<WordIncidence> phrases = new ArrayList<>();
+        WordIncidence p1 = new WordIncidence("edgar", 97);
+        WordIncidence p2 = new WordIncidence("eesti", 57);
+        WordIncidence p3 = new WordIncidence("keskerakonna", 53);
 
-        List<KeyPhrase> phrases = new ArrayList<KeyPhrase>();
-        KeyPhrase p1 = new KeyPhrase("Vilja Savisaar", 424);
-        KeyPhrase p2 = new KeyPhrase("Siiri Oviir", 81);
-        KeyPhrase p3 = new KeyPhrase("Vanilla Ninja", 5);
+        WordIncidence p4 = new WordIncidence("tallinna", 53);
 
-        KeyPhrase p4 = new KeyPhrase("Vilja Savisaar", 424);
-
-        KeyPhrase p5 = new KeyPhrase("Kadri Simson", 761);
-        KeyPhrase p6 = new KeyPhrase("Ain Seppik", 391);
-        KeyPhrase p7 = new KeyPhrase("Mart Laar", 427);
-        KeyPhrase p8 = new KeyPhrase("Lennart Meri", 181);
-        KeyPhrase p9 = new KeyPhrase("Tiit Vähi", 107);
-        KeyPhrase p10 = new KeyPhrase("Siret Kotka", 391);
+        WordIncidence p5 = new WordIncidence("linnapea", 43);
+        WordIncidence p6 = new WordIncidence("esimees", 39);
+        WordIncidence p7 = new WordIncidence("riigikogu", 25);
 
         phrases.add(p1);
         phrases.add(p2);
@@ -42,54 +40,66 @@ public class ImageSearchManager {
         phrases.add(p5);
         phrases.add(p6);
         phrases.add(p7);
-        phrases.add(p8);
-        phrases.add(p9);
-        phrases.add(p10);
 
-        imageManager.start(imageManager.limitNumberOfImages(imageManager.calculateRealWeight(phrases), 200), args[0]);
+        imageManager.startDownload(imageManager.limitNumberOfImages(imageManager.calculateRealWeight(phrases), 200), args[0]);
 
     }
 
+    public ImageSearchManager() {}
 
-    private List<KeyPhrase> calculateRealWeight(List<KeyPhrase> keyPhrases){
+    public ImageSearchManager(List<WordIncidence> keyphrases) {
+        this.keyphrases = keyphrases;
+    }
 
-        List<KeyPhrase> newPhrases = new ArrayList<KeyPhrase>();
+    public void downloadPictures(String targetFolder) {
+        File dir = new File(targetFolder);
+        dir.mkdir();
+        startDownload(limitNumberOfImages(calculateRealWeight(this.keyphrases), 200), dir.getAbsolutePath());
+    }
+
+    private List<WordIncidence> calculateRealWeight(List<WordIncidence> keyPhrases){
+
+        List<WordIncidence> newPhrases = new ArrayList<WordIncidence>();
 
         int total = 0;
 
-        for (KeyPhrase item : keyPhrases){
-            total += item.getWeight();
+        for (WordIncidence item : keyPhrases){
+            total += item.getIncidence();
         }
 
-        for (KeyPhrase item : keyPhrases){
-            newPhrases.add(new KeyPhrase(item.getPhrase(), (int) (((float) item.getWeight() / total) * 100)));
+        for (WordIncidence item : keyPhrases){
+            newPhrases.add(new WordIncidence(item.getWord(), (int) (((float) item.getIncidence() / total) * 100)));
         }
 
         return newPhrases;
     }
 
-    private List<KeyPhrase> limitNumberOfImages(List<KeyPhrase> keyPhrases, int limit){
+    private List<WordIncidence> limitNumberOfImages(List<WordIncidence> keyPhrases, int limit){
 
         int total = 0;
 
-        for (KeyPhrase item : keyPhrases){
-            total += item.getWeight();
+        for (WordIncidence item : keyPhrases){
+            total += item.getIncidence();
         }
+
+        List<WordIncidence> results;
 
         if (total > limit){
+            results = new ArrayList<>();
             float multiplier = total / limit;
 
-            for (KeyPhrase item : keyPhrases){
-                item.setWeight((int) (item.getWeight() * multiplier));
+            for (WordIncidence item : keyPhrases){
+                results.add(new WordIncidence(item.getWord(), (int) (item.getIncidence() * multiplier)));
             }
+        } else {
+            return keyPhrases;
         }
 
-        return keyPhrases;
+        return results;
     }
 
-    public static void start(List<KeyPhrase> listOfPhrases, String path){
-
-        final BlockingQueue<KeyPhrase> queueOfKeyPhrases = new LinkedBlockingQueue<KeyPhrase>(MAX_CAPACITY);
+    public static void startDownload(List<WordIncidence> listOfPhrases, String path){
+        final BlockingQueue<WordIncidence> queueOfKeyPhrases = new LinkedBlockingQueue<WordIncidence>(MAX_CAPACITY);
 
         final BlockingQueue<Pair<String, String>> queueOfLinks =
                 new LinkedBlockingQueue<Pair<String, String>>(MAX_CAPACITY);
@@ -97,30 +107,27 @@ public class ImageSearchManager {
 
         queueOfKeyPhrases.addAll(listOfPhrases);
 
-        final List<ImageFinder> consumers = new ArrayList<ImageFinder>();
+        final List<ImageFinder> imageFinders = new ArrayList<ImageFinder>();
         for (int i = 0; i < NUMBER_OF_THREADS_FOR_SEARCH; i++) {
             final ImageFinder consThread = new ImageFinder(queueOfKeyPhrases, queueOfLinks);
             consThread.start();
-            consumers.add(consThread);
+            imageFinders.add(consThread);
         }
 
 
-        final List<ImageDownloader> consumers1 = new ArrayList<ImageDownloader>();
+        final List<ImageDownloader> imageDownloaders = new ArrayList<ImageDownloader>();
         for (int i = 0; i < NUMBER_OF_THREADS_FOR_DOWNLOAD + 2; i++) {
             final ImageDownloader consThread = new ImageDownloader(queueOfLinks, path);
             consThread.start();
-            consumers1.add(consThread);
+            imageDownloaders.add(consThread);
         }
 
-
         // Wait while all threads to finish the job
-        for (ImageFinder threat : consumers){
-
+        for (ImageFinder ifThread : imageFinders) {
             try {
-                threat.join();
-
+                ifThread.join();
             }catch (InterruptedException iex){
-                iex.printStackTrace();
+                throw new RuntimeException(iex);
             }
         }
 
@@ -129,19 +136,14 @@ public class ImageSearchManager {
         System.out.println("Search finished");
 
         // Wait while all threads to finish the job
-        for (ImageDownloader threat : consumers1){
-
+        for (ImageDownloader dwnThread : imageDownloaders){
             try {
-                threat.join();
-
+                dwnThread.join();
             }catch (InterruptedException iex){
-                iex.printStackTrace();
+                throw new RuntimeException(iex);
             }
         }
 
         System.out.println("Download finished");
-
     }
-
-
 }
